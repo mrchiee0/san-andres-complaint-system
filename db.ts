@@ -23,6 +23,177 @@ async function ensureSchema() {
       await connection.query("ALTER TABLE users ADD COLUMN is_resident ENUM('Resident', 'Non Resident') NOT NULL DEFAULT 'Resident' AFTER role");
     }
 
+    // ── Core tables that ensureSchema used to assume already existed ──────────
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS complaint_types (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL UNIQUE,
+        category VARCHAR(150) NOT NULL DEFAULT 'Social & Safety Concerns',
+        description TEXT NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        setting_key VARCHAR(50) NOT NULL PRIMARY KEY,
+        setting_value TEXT NOT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    // Seed default site settings if table is empty
+    await connection.query(`
+      INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES
+        ('site_name', 'San Andres Complaint System'),
+        ('hero_title', 'Community Voices, <br /> <span class="text-primary">Barangay Action.</span>'),
+        ('hero_subtitle', 'A modern system for the fast, safe, and transparent reporting of concerns in Barangay San Andres.'),
+        ('about_text', 'Designed for fast and effective public service.'),
+        ('logo_path', '')
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS complaints (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        blotter_number VARCHAR(50) NULL,
+        user_id INT NOT NULL,
+        uri_ng_reklamo VARCHAR(255) NOT NULL,
+        complainant_name VARCHAR(255) NULL,
+        complainant_email VARCHAR(255) NULL,
+        is_anonymous TINYINT(1) NOT NULL DEFAULT 0,
+        detalye TEXT NOT NULL,
+        nireklamo_pangalan VARCHAR(255) NULL,
+        nireklamo_email VARCHAR(255) NULL,
+        nireklamo_user_id INT NULL,
+        is_resident ENUM('Resident','Non Resident') NOT NULL DEFAULT 'Resident',
+        zone VARCHAR(100) NULL,
+        street_name VARCHAR(255) NULL,
+        address_details TEXT NULL,
+        latitude DECIMAL(10,7) NULL,
+        longitude DECIMAL(10,7) NULL,
+        detected_boundary_ids JSON NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'bago',
+        assigned_to INT NULL,
+        truthfulness_acknowledged_at DATETIME NULL,
+        edit_count TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        deleted_at DATETIME NULL,
+        mediation_eligible TINYINT(1) NOT NULL DEFAULT 0,
+        mediation_eligibility_notes TEXT NULL,
+        mediation_eligibility_verified_by INT NULL,
+        mediation_eligibility_verified_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_complaints_user (user_id),
+        INDEX idx_complaints_status (status),
+        INDEX idx_complaints_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS evidence (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        file_path VARCHAR(1000) NOT NULL,
+        file_type VARCHAR(100) NOT NULL,
+        original_name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_evidence_complaint (complaint_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS actions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        user_id INT NOT NULL,
+        paglalarawan TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_actions_complaint (complaint_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        user_id INT NOT NULL,
+        mensahe TEXT NOT NULL,
+        nabasa TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_messages_complaint (complaint_id),
+        INDEX idx_messages_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS schedules (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        petsa DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        venue VARCHAR(500) NOT NULL DEFAULT '',
+        delivery_method VARCHAR(100) NOT NULL DEFAULT '',
+        delivery_details TEXT NULL,
+        detalye TEXT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'naka-iskedyul',
+        outcome VARCHAR(50) NULL,
+        minutes TEXT NULL,
+        attendees TEXT NULL,
+        document_path VARCHAR(1000) NULL,
+        staff_user_id INT NULL,
+        assigned_personnel TEXT NULL,
+        summons_details JSON NULL,
+        updated_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_schedules_complaint (complaint_id),
+        INDEX idx_schedules_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS witnesses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        pangalan VARCHAR(255) NOT NULL,
+        telepono VARCHAR(50) NULL,
+        detalye TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_witnesses_complaint (complaint_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS lupon_members (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        pangalan VARCHAR(255) NOT NULL,
+        posisyon VARCHAR(100) NOT NULL DEFAULT '',
+        telepono VARCHAR(50) NULL,
+        email VARCHAR(255) NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS case_lupon (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        complaint_id INT NOT NULL,
+        lupon_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_case_lupon (complaint_id, lupon_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        aksyon VARCHAR(100) NOT NULL,
+        detalye TEXT NULL,
+        ip_address VARCHAR(45) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_logs_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        keywords TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    // ── End core tables ────────────────────────────────────────────────────────
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS account_sequence (
         id TINYINT PRIMARY KEY,
