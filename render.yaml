@@ -13,10 +13,10 @@ services:
       - key: NODE_ENV
         value: production
 
-      # ── Database (Filess.io MySQL) ──────────────────────────────────────────
-      # Set these in the Render dashboard after creating your Filess.io database.
+      # ── Database (Aiven MySQL) ──────────────────────────────────────────────
+      # Set these in the Render dashboard — values from Aiven Overview tab.
       - key: DB_HOST
-        sync: false          # e.g.  hostname.filess.io
+        sync: false          # e.g. mysql-xxxx.aivencloud.com
       - key: DB_PORT
         sync: false          # e.g.  3306
       - key: DB_USER
