@@ -1,0 +1,88 @@
+services:
+  # ─── Web Service (Express + React SPA) ───────────────────────────────────────
+  - type: web
+    name: san-andres-complaint-system
+    runtime: node
+    region: singapore   # Closest free region to the Philippines
+    plan: free          # Free tier: 512 MB RAM, spins down after 15 min inactivity
+    buildCommand: npm run render-build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # DB — points to the MySQL private service below via its internal hostname
+      - key: DB_HOST
+        fromService:
+          name: san-andres-mysql
+          type: privateService
+          property: host
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        fromService:
+          name: san-andres-mysql
+          type: privateService
+          envVarKey: MYSQL_USER
+      - key: DB_PASSWORD
+        fromService:
+          name: san-andres-mysql
+          type: privateService
+          envVarKey: MYSQL_PASSWORD
+      - key: DB_NAME
+        fromService:
+          name: san-andres-mysql
+          type: privateService
+          envVarKey: MYSQL_DATABASE
+      - key: DB_SSL
+        value: "false"
+      # Auth
+      - key: JWT_SECRET
+        generateValue: true   # Render auto-generates a secure random value
+      # Email (set these manually in the Render dashboard)
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      # Google OAuth (set manually in the Render dashboard)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Cloudinary (set manually in the Render dashboard)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Ably (set manually in the Render dashboard)
+      - key: ABLY_API_KEY
+        sync: false
+      - key: VITE_ABLY_API_KEY
+        sync: false
+      # Gemini AI (set manually in the Render dashboard)
+      - key: VITE_GEMINI_API_KEY
+        sync: false
+
+  # ─── MySQL Private Service ────────────────────────────────────────────────────
+  # Deployed from Render's official MySQL template (Docker-based, MySQL 8).
+  # Internal hostname: san-andres-mysql:3306 (only reachable from other Render services)
+  - type: privateService
+    name: san-andres-mysql
+    runtime: docker
+    repo: https://github.com/render-examples/mysql   # Render's official MySQL Docker template
+    region: singapore
+    plan: free
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 1
+    envVars:
+      - key: MYSQL_DATABASE
+        value: san_andres_complaint_system
+      - key: MYSQL_USER
+        value: sanandres
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true

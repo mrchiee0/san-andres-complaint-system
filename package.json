@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch server.ts",
-    "start": "node server.ts",
+    "start": "tsx server.ts",
     "build": "vite build",
-    "vercel-build": "vite build",
+    "render-build": "npm install --legacy-peer-deps && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
