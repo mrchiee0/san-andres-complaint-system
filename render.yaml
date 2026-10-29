@@ -1,24 +1,22 @@
 services:
-  # ─── Web Service (Express API + React SPA) ───────────────────────────────────
-  # Render free tier: 512MB RAM, spins down after 15min inactivity.
-  # MySQL is hosted externally on Filess.io (free, external connection, SSL required).
+  # Express API service; the Vercel project serves the frontend.
   - type: web
-    name: san-andres-complaint-system
+    name: san-andres-complaint-api
     runtime: node
-    region: singapore        # Closest free Render region to the Philippines
+    region: singapore
     plan: free
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
 
-      # ── Database (Aiven MySQL) ──────────────────────────────────────────────
-      # Set these in the Render dashboard — values from Aiven Overview tab.
+      # MySQL is hosted externally. Set these from the database provider.
       - key: DB_HOST
-        sync: false          # e.g. mysql-xxxx.aivencloud.com
+        sync: false
       - key: DB_PORT
-        sync: false          # e.g.  3306
+        sync: false
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD
@@ -26,25 +24,27 @@ services:
       - key: DB_NAME
         sync: false
       - key: DB_SSL
-        value: "true"        # Filess.io requires SSL
+        value: "true"
 
-      # ── Auth ────────────────────────────────────────────────────────────────
       - key: JWT_SECRET
-        generateValue: true  # Render auto-generates a secure random value
+        generateValue: true
 
-      # ── Email (Gmail SMTP) ──────────────────────────────────────────────────
+      # Set these to the production Vercel site URL.
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
         sync: false
 
-      # ── Google OAuth ────────────────────────────────────────────────────────
       - key: GOOGLE_CLIENT_ID
         sync: false
-      - key: VITE_GOOGLE_CLIENT_ID
-        sync: false
 
-      # ── Cloudinary ──────────────────────────────────────────────────────────
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -52,12 +52,10 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
-      # ── Ably (real-time) ────────────────────────────────────────────────────
       - key: ABLY_API_KEY
         sync: false
-      - key: VITE_ABLY_API_KEY
-        sync: false
 
-      # ── Gemini AI ───────────────────────────────────────────────────────────
-      - key: VITE_GEMINI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
+      - key: GEMINI_MODEL
+        value: gemini-flash-lite-latest

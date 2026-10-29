@@ -969,8 +969,7 @@ export async function initDb() {
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-    // Railway (and most managed MySQL providers) require SSL. Set DB_SSL=true to enable.
-    // On Render, MySQL runs as an internal private service — SSL is NOT needed (DB_SSL=false or unset).
+    // Enable TLS for managed MySQL providers that require encrypted connections.
     ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {}),
   });
 
