@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -40,8 +41,8 @@ export default function ComplaintList() {
   React.useEffect(() => {
     setLoading(true);
     const endpoint = user?.role === 'mamamayan'
-      ? '/api/complaints?scope=mine'
-      : `/api/complaints${showRecycleBin ? '?recycle_bin=1' : ''}`;
+      ? apiUrl('/api/complaints?scope=mine')
+      : apiUrl(`/api/complaints${showRecycleBin ? '?recycle_bin=1' : ''}`);
     fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -62,8 +63,8 @@ export default function ComplaintList() {
     if (!window.confirm(confirmation)) return;
     try {
       const response = await fetch(restore
-        ? `/api/admin/complaints/${complaint.id}/restore`
-        : `/api/admin/complaints/${complaint.id}`, {
+        ? apiUrl(`/api/admin/complaints/${complaint.id}/restore`)
+        : apiUrl(`/api/admin/complaints/${complaint.id}`), {
         method: restore ? 'PATCH' : 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

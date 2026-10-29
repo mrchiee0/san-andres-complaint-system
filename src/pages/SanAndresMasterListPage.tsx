@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -79,7 +80,7 @@ export default function SanAndresMasterListPage() {
   const fetchZones = async () => {
     if (!token) return;
     try {
-      const res = await fetch('/api/admin/complaint-zones', {
+      const res = await fetch(apiUrl('/api/admin/complaint-zones'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await safeJson(res);
@@ -120,7 +121,7 @@ export default function SanAndresMasterListPage() {
 
     setSaving(true);
     try {
-      const res = await fetch(editingId ? `/api/admin/complaint-zones/${editingId}` : '/api/admin/complaint-zones', {
+      const res = await fetch(editingId ? apiUrl(`/api/admin/complaint-zones/${editingId}`) : apiUrl('/api/admin/complaint-zones'), {
         method: editingId ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +160,7 @@ export default function SanAndresMasterListPage() {
     if (!window.confirm(`Archive ${zone.name}?`)) return;
 
     try {
-      const res = await fetch(`/api/admin/complaint-zones/${zone.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/complaint-zones/${zone.id}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

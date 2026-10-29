@@ -19,9 +19,21 @@ import { boundaryContains, boundaryIntersects, buildBoundaryClassification, dete
 import { generateCaseClosureReportDocx } from './src/services/caseClosureReportDocx.ts';
 import Ably from 'ably';
 import { uploadToCloudinary } from './src/services/cloudinaryService.ts';
+import { generateChatResponse } from './src/services/serverGeminiService.ts';
+import {
+  getTrendAnalytics,
+  getPredictionAnalytics,
+  getRecommendations,
+  createRecommendation,
+  updateRecommendationStatus,
+  fetchWeatherData
+} from './src/services/predictiveAnalyticsService.ts';
 
-// JWT_SECRET check removed per request
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-supersecretkey-forsanandres-2024';
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be configured in production.');
+}
+
+const JWT_SECRET = process.env.JWT_SECRET || 'local-development-only-secret';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
@@ -91,7 +103,21 @@ async function startServer() {
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: { policy: "unsafe-none" }
   }));
-  app.use(cors());
+  const allowedOrigins = new Set(
+    [process.env.FRONTEND_URL, process.env.CORS_ORIGINS]
+      .flatMap((value) => value?.split(',') ?? [])
+      .map((origin) => origin.trim().replace(/\/+$/, ''))
+      .filter(Boolean),
+  );
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || process.env.NODE_ENV !== 'production' || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS origin is not allowed: ${origin}`));
+    },
+  }));
   app.use(express.json());
 
   // Logging Middleware to debug 403s
@@ -107,6 +133,50 @@ async function startServer() {
     message: { error: 'Masyadong maraming request mula sa IP na ito. Subukan muli mamaya.' }
   });
   app.use('/api/', limiter);
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+  app.post('/api/chat/gemini', async (req, res) => {
+    const message: unknown = req.body?.message;
+    const history: unknown = req.body?.history;
+    if (typeof message !== 'string' || !message.trim() || message.length > 2000) {
+      return res.status(400).json({ error: 'A message between 1 and 2000 characters is required.' });
+    }
+
+    if (history !== undefined && !Array.isArray(history)) {
+      return res.status(400).json({ error: 'Chat history must be an array.' });
+    }
+
+    const validHistory = (Array.isArray(history) ? history : [])
+      .slice(-20)
+      .flatMap((entry: unknown) => {
+        if (typeof entry !== 'object' || entry === null) return [];
+        const role = 'role' in entry ? entry.role : undefined;
+        const parts = 'parts' in entry ? entry.parts : undefined;
+        if ((role !== 'user' && role !== 'model') || !Array.isArray(parts)) return [];
+
+        const firstPart: unknown = parts[0];
+        if (typeof firstPart !== 'object' || firstPart === null || !('text' in firstPart) || typeof firstPart.text !== 'string') {
+          return [];
+        }
+
+        const validRole: 'user' | 'model' = role;
+        const validEntry: { role: 'user' | 'model'; parts: { text: string }[] } = {
+          role: validRole,
+          parts: [{ text: firstPart.text.slice(0, 2000) }],
+        };
+        return [validEntry];
+      });
+
+    try {
+      const response = await generateChatResponse(message.trim(), validHistory);
+      res.json({ response });
+    } catch (error) {
+      console.error('Error generating AI chat response:', error);
+      res.status(500).json({ error: 'Unable to generate an AI response.' });
+    }
+  });
 
   // Multer memory storage — files are held in req.file.buffer / req.files[n].buffer
   // and uploaded directly to Cloudinary. No local disk writes.
@@ -2944,6 +3014,128 @@ app.patch('/api/auth/profile', authenticate, async (req: any, res) => {
     } catch (error) {
       console.error('Error fetching stats:', error);
       res.status(500).json({ error: 'Unable to load dashboard statistics.' });
+    }
+  });
+
+  // --- ADVANCED TREND ANALYSIS & AI PREDICTION ENDPOINTS ---
+  app.get('/api/analytics/trends', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'You are not authorized to view predictive analytics.' });
+      }
+      const data = await getTrendAnalytics(db, {
+        scope: req.query.scope ? String(req.query.scope) : undefined,
+        range: req.query.range ? String(req.query.range) : undefined,
+        category: req.query.category ? String(req.query.category) : undefined,
+        status: req.query.status ? String(req.query.status) : undefined,
+        zone: req.query.zone ? String(req.query.zone) : undefined,
+        startDate: req.query.startDate ? String(req.query.startDate) : undefined,
+        endDate: req.query.endDate ? String(req.query.endDate) : undefined,
+      });
+      res.json(data);
+    } catch (error) {
+      console.error('Error in /api/analytics/trends:', error);
+      res.status(500).json({ error: 'Unable to compute trend analytics.' });
+    }
+  });
+
+  app.get('/api/analytics/predictions', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'You are not authorized to view complaint predictions.' });
+      }
+      const data = await getPredictionAnalytics(db, {
+        horizon: req.query.horizon === '7d' || req.query.horizon === '90d' ? req.query.horizon : '30d',
+        scope: req.query.scope ? String(req.query.scope) : undefined,
+        category: req.query.category ? String(req.query.category) : undefined,
+        zone: req.query.zone ? String(req.query.zone) : undefined,
+      });
+      res.json(data);
+    } catch (error) {
+      console.error('Error in /api/analytics/predictions:', error);
+      res.status(500).json({ error: 'Unable to compute prediction analytics.' });
+    }
+  });
+
+  app.get('/api/analytics/weather', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Staff access required.' });
+      }
+      const data = await fetchWeatherData();
+      res.json(data);
+    } catch (error) {
+      console.error('Error in /api/analytics/weather:', error);
+      res.status(500).json({ error: 'Unable to fetch meteorological data.' });
+    }
+  });
+
+  app.get('/api/analytics/recommendations', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Staff access required.' });
+      }
+      const data = await getRecommendations(db, {
+        status: req.query.status ? String(req.query.status) : undefined,
+        type: req.query.type ? String(req.query.type) : undefined,
+        zone: req.query.zone ? String(req.query.zone) : undefined,
+      });
+      res.json(data);
+    } catch (error) {
+      console.error('Error in /api/analytics/recommendations:', error);
+      res.status(500).json({ error: 'Unable to load recommendations.' });
+    }
+  });
+
+  app.post('/api/analytics/recommendations', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Staff access required.' });
+      }
+      const { title, recommendation_type, category, zone, risk_level, priority, recommended_action, rationale, timeframe, responsible_office } = req.body;
+      if (!title || !recommendation_type || !recommended_action) {
+        return res.status(400).json({ error: 'Title, recommendation type, and action are required.' });
+      }
+      const item = await createRecommendation(db, {
+        title,
+        recommendation_type,
+        category,
+        zone,
+        risk_level,
+        priority,
+        recommended_action,
+        rationale: rationale || '',
+        timeframe,
+        responsible_office,
+        userId: req.user.id,
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      console.error('Error creating recommendation:', error);
+      res.status(500).json({ error: 'Unable to create recommendation.' });
+    }
+  });
+
+  app.patch('/api/analytics/recommendations/:id', authenticate, async (req: any, res) => {
+    try {
+      if (!['admin', 'official'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Staff access required.' });
+      }
+      const id = Number(req.params.id);
+      const { status, notes } = req.body;
+      const validStatuses = ['suggested', 'under_review', 'approved', 'in_progress', 'completed', 'dismissed'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid recommendation status.' });
+      }
+      const updated = await updateRecommendationStatus(db, id, {
+        status,
+        notes,
+        userId: req.user.id,
+      });
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating recommendation:', error);
+      res.status(500).json({ error: 'Unable to update recommendation.' });
     }
   });
 

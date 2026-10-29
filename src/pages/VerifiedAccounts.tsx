@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { safeJson, maskEmail } from '../lib/utils';
@@ -18,7 +19,7 @@ export default function VerifiedAccounts() {
 
   React.useEffect(() => {
     if (!token) return;
-    fetch('/api/admin/verified-accounts', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl('/api/admin/verified-accounts'), { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const data = await safeJson(response);
         if (!response.ok) throw new Error(data.error || 'Unable to load verified accounts.');

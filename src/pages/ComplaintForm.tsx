@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, ClipboardCheck, FileText, ImagePlus, MapPin, ShieldCheck, UserRound, Eye, EyeOff, RotateCcw } from 'lucide-react';
@@ -54,7 +55,7 @@ export default function ComplaintForm() {
   const displayName = isAnonymous ? 'Anonymous' : (user?.pangalan || '');
 
   React.useEffect(() => {
-    fetch('/api/complaint-types')
+    fetch(apiUrl('/api/complaint-types'))
       .then(safeJson)
       .then((data) => setComplaintTypes(Array.isArray(data) ? data : []))
       .catch(() => toast.error('Unable to load complaint types.'))
@@ -138,7 +139,7 @@ export default function ComplaintForm() {
 
   React.useEffect(() => {
     if (!id || !token) return;
-    fetch(`/api/complaints/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl(`/api/complaints/${id}`), { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const data = await safeJson(response);
         if (!response.ok) throw new Error(data.error || 'Unable to load this complaint.');
@@ -198,7 +199,7 @@ export default function ComplaintForm() {
     if (step === 4 && (!locationResult || !locationResult.insideBoundary) && typedAddress.trim()) {
       setSubmitting(true);
       try {
-        const res = await fetch('/api/location/validate', {
+        const res = await fetch(apiUrl('/api/location/validate'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -271,7 +272,7 @@ export default function ComplaintForm() {
     files.forEach((file) => body.append('evidence', file));
 
     try {
-      const response = await fetch(editing ? `/api/complaints/${id}` : '/api/complaints', {
+      const response = await fetch(editing ? apiUrl(`/api/complaints/${id}`) : apiUrl('/api/complaints'), {
         method: editing ? 'PATCH' : 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body,

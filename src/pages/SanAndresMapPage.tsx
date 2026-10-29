@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import SanAndresMap from '../components/SanAndresMap';
@@ -23,7 +24,7 @@ export default function SanAndresMapPage() {
   const focusPlace = zones.find((zone) => zone.name === zoneName) || sanAndresAreas.find((area) => area.id === placeId);
 
   useEffect(() => {
-    fetch('/api/complaint-zones?include_empty=1')
+    fetch(apiUrl('/api/complaint-zones?include_empty=1'))
       .then(safeJson)
       .then((data) => {
         if (Array.isArray(data)) {
@@ -39,19 +40,19 @@ export default function SanAndresMapPage() {
       try {
         let dots: IncidentDot[] = [];
         // Try /api/incident-dots first
-        const res = await fetch('/api/incident-dots', { headers });
+        const res = await fetch(apiUrl('/api/incident-dots'), { headers });
         const data = await safeJson(res);
         if (Array.isArray(data) && data.length > 0) {
           dots = data;
         } else {
           // Fallback to /api/complaint-dots
-          const res2 = await fetch('/api/complaint-dots', { headers });
+          const res2 = await fetch(apiUrl('/api/complaint-dots'), { headers });
           const data2 = await safeJson(res2);
           if (Array.isArray(data2) && data2.length > 0) {
             dots = data2;
           } else {
             // Fallback to /api/stats
-            const res3 = await fetch('/api/stats', { headers });
+            const res3 = await fetch(apiUrl('/api/stats'), { headers });
             const data3 = await safeJson(res3);
             if (Array.isArray(data3?.activeComplaintDots)) {
               dots = data3.activeComplaintDots;

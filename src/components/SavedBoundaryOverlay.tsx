@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import L from 'leaflet';
 import { GeoJSON, useMap } from 'react-leaflet';
@@ -22,7 +23,7 @@ export default function SavedBoundaryOverlay({ zones = [], heatmap = false, hide
 
   React.useEffect(() => {
     let active = true;
-    fetch('/api/boundaries')
+    fetch(apiUrl('/api/boundaries'))
       .then((response) => response.ok ? response.json() : [])
       .then((data) => { if (active && Array.isArray(data)) setBoundaries(data); })
       .catch((error) => console.error('Unable to load mapped boundaries:', error));

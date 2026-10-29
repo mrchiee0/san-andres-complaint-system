@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
@@ -43,7 +44,7 @@ export default function CertificateToFileAction() {
 
   React.useEffect(() => {
     if (!token) return;
-    fetch(`/api/complaints/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl(`/api/complaints/${id}`), { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Unable to load the complaint.');
@@ -56,7 +57,7 @@ export default function CertificateToFileAction() {
     if (!data || !isStaff || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/complaints/${data.id}/certificate-to-file-action`, {
+      const response = await fetch(apiUrl(`/api/complaints/${data.id}/certificate-to-file-action`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
@@ -58,7 +59,7 @@ export default function NoticeToAppear() {
 
   React.useEffect(() => {
     if (!token) return;
-    fetch(`/api/mediation/${id}`, {
+    fetch(apiUrl(`/api/mediation/${id}`), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {
@@ -105,7 +106,7 @@ export default function NoticeToAppear() {
     if (!data || !isStaff || isSavingSummons) return;
     setIsSavingSummons(true);
     try {
-      const response = await fetch(`/api/mediation/${data.id}/summons`, {
+      const response = await fetch(apiUrl(`/api/mediation/${data.id}/summons`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

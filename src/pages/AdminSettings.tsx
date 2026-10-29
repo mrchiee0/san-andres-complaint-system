@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -47,7 +48,7 @@ export default function AdminSettings() {
   const fetchTypes = async () => {
     setLoadingTypes(true);
     try {
-      const res = await fetch('/api/admin/complaint-types', {
+      const res = await fetch(apiUrl('/api/admin/complaint-types'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await safeJson(res);
@@ -64,7 +65,7 @@ export default function AdminSettings() {
     if (!newTypeName.trim()) return;
 
     try {
-      const res = await fetch('/api/admin/complaint-types', {
+      const res = await fetch(apiUrl('/api/admin/complaint-types'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ export default function AdminSettings() {
 
   const handleUpdateType = async (type: ComplaintType) => {
     try {
-      const res = await fetch(`/api/admin/complaint-types/${type.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/complaint-types/${type.id}`), {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -111,7 +112,7 @@ export default function AdminSettings() {
 
   const handleToggleTypeStatus = async (type: ComplaintType) => {
     try {
-      const res = await fetch(`/api/admin/complaint-types/${type.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/complaint-types/${type.id}`), {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -137,7 +138,7 @@ export default function AdminSettings() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ export default function AdminSettings() {
     form.append('logo', file);
 
     try {
-      const res = await fetch('/api/admin/upload-logo', {
+      const res = await fetch(apiUrl('/api/admin/upload-logo'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Search, MapPin, AlertCircle, CheckCircle2, X, LocateFixed, ExternalLink, Check, Edit3, Compass } from 'lucide-react';
 import { Button } from './ui/button';
@@ -60,7 +61,7 @@ export default function LocationSearchPicker({ value, onChange, onQueryChange, t
       setValidationError(null);
 
       try {
-        const res = await fetch('/api/location/validate', {
+        const res = await fetch(apiUrl('/api/location/validate'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ export default function LocationSearchPicker({ value, onChange, onQueryChange, t
         return;
       }
       setIsLoadingSuggestions(true);
-      fetch(`/api/location/search?q=${encodeURIComponent(q)}`, {
+      fetch(apiUrl(`/api/location/search?q=${encodeURIComponent(q)}`), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
         .then((r) => r.json())
@@ -203,7 +204,7 @@ export default function LocationSearchPicker({ value, onChange, onQueryChange, t
     setIsValidating(true);
     setValidationError(null);
     try {
-      const searchRes = await fetch(`/api/location/search?q=${encodeURIComponent(trimmed)}`, {
+      const searchRes = await fetch(apiUrl(`/api/location/search?q=${encodeURIComponent(trimmed)}`), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const searchData = await searchRes.json();

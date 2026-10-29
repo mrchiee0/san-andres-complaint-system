@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -27,7 +28,9 @@ import {
   MessageCircle,
   BellRing,
   ChevronLeft,
-  Send
+  Send,
+  TrendingUp,
+  Brain
 } from 'lucide-react';
 import { cn, safeJson } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -81,7 +84,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch('/api/complaints', {
+      const res = await fetch(apiUrl('/api/complaints'), {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       const complaints = await safeJson(res);
@@ -183,7 +186,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const fetchNotifications = async () => {
     if (!useAuthStore.getState().token) return;
     try {
-      const res = await fetch('/api/notifications', {
+      const res = await fetch(apiUrl('/api/notifications'), {
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` }
       });
       const data = await safeJson(res);
@@ -196,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const markAsRead = async (id: number) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, {
+      await fetch(apiUrl(`/api/notifications/${id}/read`), {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` }
       });
@@ -208,7 +211,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/notifications/read-all', {
+      await fetch(apiUrl('/api/notifications/read-all'), {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` }
       });
@@ -230,7 +233,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     setIsThreadLoading(true);
     setThreadMessages([]);
     try {
-      const response = await fetch(`/api/complaints/${thread.complaint_id}`, {
+      const response = await fetch(apiUrl(`/api/complaints/${thread.complaint_id}`), {
         headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
       });
       const data = await safeJson(response);
@@ -242,7 +245,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       setThreadMessages(conversation);
 
       if (conversation.some((message: any) => message.user_id !== user?.id && !message.nabasa)) {
-        await fetch(`/api/complaints/${thread.complaint_id}/messages/read`, {
+        await fetch(apiUrl(`/api/complaints/${thread.complaint_id}/messages/read`), {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
         });
@@ -263,7 +266,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const text = messageDraft.trim();
     setIsSendingMessage(true);
     try {
-      const response = await fetch(`/api/complaints/${activeMessageThread.complaint_id}/messages`, {
+      const response = await fetch(apiUrl(`/api/complaints/${activeMessageThread.complaint_id}/messages`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +314,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           : thread)
         .sort((left, right) => new Date(right.petsa).getTime() - new Date(left.petsa).getTime()));
       if (msg.user_id !== user?.id) {
-        void fetch(`/api/complaints/${complaintId}/messages/read`, {
+        void fetch(apiUrl(`/api/complaints/${complaintId}/messages/read`), {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${useAuthStore.getState().token}` }
         });
@@ -439,7 +442,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { name: LABELS.NAV.calendar, path: '/calendar', icon: Calendar, roles: ['admin', 'official'] },
     { name: 'Verified Accounts', path: '/admin/accounts', icon: UsersRound, roles: ['admin', 'official'] },
     { name: 'Settings', path: '/settings', icon: Settings, roles: ['mamamayan'] },
-    { name: LABELS.NAV.reports, path: '/reports', icon: BarChart3, roles: ['admin'] },
+    {
+      name: LABELS.NAV.reports,
+      path: '/reports',
+      icon: BarChart3,
+      roles: ['admin'],
+      subItems: [
+        { name: 'Trend Analysis', path: '/reports/trends', icon: TrendingUp, roles: ['admin'] },
+        { name: 'AI Prediction', path: '/reports/predictions', icon: Brain, roles: ['admin'] },
+      ]
+    },
     { name: 'Heatmap', path: '/barangay-map', icon: Flame, roles: ['admin', 'official'] },
     { name: 'Boundary Management', path: '/admin/boundaries', icon: MapPinned, roles: ['admin'] },
     { name: 'Settings', path: '/admin/settings', icon: Settings, roles: ['admin'] },
@@ -449,7 +461,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (location.pathname === path) return true;
     if (path === '/complaints' && (location.pathname === '/reklamo' || location.pathname.startsWith('/reklamo/'))) return true;
     if (path === '/calendar' && location.pathname === '/kalendaryo') return true;
-    if (path === '/reports' && location.pathname === '/ulat') return true;
+    if (path === '/reports' && (location.pathname === '/reports' || location.pathname === '/ulat')) return true;
+    if (path === '/reports/trends' && (location.pathname === '/reports/trends' || location.pathname === '/ulat/trends')) return true;
+    if (path === '/reports/predictions' && (location.pathname === '/reports/predictions' || location.pathname === '/ulat/predictions')) return true;
     return false;
   };
 
@@ -464,6 +478,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const getHeaderTitle = () => {
     if (location.pathname === '/complaints/new' || /^\/complaints\/[^/]+\/edit$/.test(location.pathname)) {
       return 'Complaint Form';
+    }
+    if (location.pathname === '/reports/trends' || location.pathname === '/ulat/trends') {
+      return 'Trend Analysis';
+    }
+    if (location.pathname === '/reports/predictions' || location.pathname === '/ulat/predictions') {
+      return 'AI Prediction';
     }
     return navItems.find(i => isItemActive(i.path))?.name || 'System';
   };
@@ -598,21 +618,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </SheetTitle>
               </SheetHeader>
               <nav className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto px-4">
-                {filteredNav.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center p-3 rounded-xl transition-all group",
-                      isItemActive(item.path) 
-                        ? "bg-primary text-primary-foreground shadow-lg" 
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                {filteredNav.map((item: any) => (
+                  <React.Fragment key={item.path}>
+                    <Link
+                      to={item.path}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center p-3 rounded-xl transition-all group",
+                        isItemActive(item.path)
+                          ? "bg-primary text-primary-foreground shadow-lg"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <item.icon size={20} className="shrink-0" />
+                      <span className="ml-3 font-medium">{item.name}</span>
+                    </Link>
+                    {item.subItems && (
+                      <div className="ml-4 pl-3 border-l-2 border-border/60 space-y-1 my-1">
+                        {item.subItems.map((sub: any) => (
+                          <Link
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={cn(
+                              "flex items-center px-3 py-2 rounded-lg text-xs transition-all group",
+                              isItemActive(sub.path)
+                                ? "bg-primary/15 text-primary font-bold border border-primary/25"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            <sub.icon size={16} className="shrink-0" />
+                            <span className="ml-2.5 font-medium">{sub.name}</span>
+                          </Link>
+                        ))}
+                      </div>
                     )}
-                  >
-                    <item.icon size={20} className="shrink-0" />
-                    <span className="ml-3 font-medium">{item.name}</span>
-                  </Link>
+                  </React.Fragment>
                 ))}
               </nav>
               <div className="mt-auto shrink-0 border-t border-border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -664,24 +705,66 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto px-4">
-          {filteredNav.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center p-3 rounded-xl transition-all group",
-                isItemActive(item.path) 
-                  ? "bg-primary text-primary-foreground shadow-lg" 
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          {filteredNav.map((item: any) => (
+            <React.Fragment key={item.path}>
+              <Link
+                to={item.path}
+                className={cn(
+                  "flex items-center p-3 rounded-xl transition-all group",
+                  isItemActive(item.path)
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
+                title={item.name}
+              >
+                <item.icon size={20} className="shrink-0 group-hover:scale-110 transition-transform" />
+                {isSidebarOpen && (
+                  <span className="ml-3 font-medium whitespace-nowrap overflow-hidden">
+                    {item.name}
+                  </span>
+                )}
+              </Link>
+              {item.subItems && isSidebarOpen && (
+                <div className="ml-4 pl-3 border-l-2 border-border/60 space-y-1 my-1">
+                  {item.subItems.map((sub: any) => (
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-lg text-xs transition-all group",
+                        isItemActive(sub.path)
+                          ? "bg-primary/15 text-primary font-bold border border-primary/25"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <sub.icon size={16} className="shrink-0 group-hover:scale-110 transition-transform" />
+                      <span className="ml-2.5 font-medium whitespace-nowrap overflow-hidden">
+                        {sub.name}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               )}
-            >
-              <item.icon size={20} className="shrink-0 group-hover:scale-110 transition-transform" />
-              {isSidebarOpen && (
-                <span className="ml-3 font-medium whitespace-nowrap overflow-hidden">
-                  {item.name}
-                </span>
+              {item.subItems && !isSidebarOpen && (
+                <div className="flex flex-col items-center space-y-1 my-1">
+                  {item.subItems.map((sub: any) => (
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      title={sub.name}
+                      className={cn(
+                        "flex items-center justify-center p-2 rounded-lg transition-all group",
+                        isItemActive(sub.path)
+                          ? "bg-primary/20 text-primary font-bold"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <sub.icon size={16} className="shrink-0 group-hover:scale-110 transition-transform" />
+                    </Link>
+                  ))}
+                </div>
               )}
-            </Link>
+            </React.Fragment>
           ))}
         </nav>
 

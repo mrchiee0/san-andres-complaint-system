@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -168,7 +169,7 @@ export default function CaseHistory({ complaint, actions, audit, mediationAudit,
     if (isEmailing) return;
     setIsEmailing(true);
     try {
-      const response = await fetch(`/api/complaints/${complaint.id}/history/email`, {
+      const response = await fetch(apiUrl(`/api/complaints/${complaint.id}/history/email`), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -102,4 +102,27 @@ Gemini fallback if no key.
 - Auto token validation
 - Env required
 
+## Production Deployment (Vercel + Railway)
 
+The recommended split deployment serves the Vite frontend from Vercel, runs the Express API and MySQL database on Railway, and uses Cloudinary for uploaded evidence, logos, and static site imagery.
+
+### Railway API and database
+
+1. Create a Railway project with a MySQL service and a Node.js service connected to this repository.
+2. Keep the repository root as the service root. The included `railway.json` builds the Vite assets, starts the Express API with `npm start`, and checks `/api/health`.
+3. Add the Railway MySQL service variables to the API service. The app reads Railway's `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, and `MYSQLDATABASE` variables directly, or you can provide the equivalent `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. Use the private/internal MySQL host when both services are in the same Railway project. Set `DB_SSL=true` if the database endpoint requires TLS.
+4. Set `NODE_ENV=production`. Configure `JWT_SECRET` with a strong random secret. Add `APP_URL` and `FRONTEND_URL` with the Vercel site's HTTPS origin. Set `CORS_ORIGINS` to a comma-separated list if more than one frontend origin is required.
+5. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`. Optionally configure `GEMINI_API_KEY` and `GEMINI_MODEL`, SMTP settings, Google OAuth, and Ably. Keep secret values only in Railway's environment settings.
+6. Import the database schema/data into Railway MySQL before directing production traffic. The app also runs additive schema checks when the API starts.
+
+### Vercel frontend
+
+1. Import the same repository into Vercel using the project root. `vercel.json` builds with `npm run build`, publishes `dist`, and supports client-side routes.
+2. Set `VITE_API_URL` to the Railway API's public HTTPS origin (for example, `https://your-api.up.railway.app`, without an `/api` suffix), then redeploy whenever it changes. All frontend API requests, including file uploads, use this base URL.
+3. Before deploying the frontend, run `npm run cloudinary:upload-static` locally after adding your Cloudinary credentials to ignored `.env.local`. This uploads every file in `public/images` into the Cloudinary `san-andres-site` folder. Set `VITE_CLOUDINARY_CLOUD_NAME` to the account's cloud name in Vercel so static logos and images use those uploads.
+4. Set public build-time values such as `VITE_GOOGLE_CLIENT_ID` and the subscribe-only `VITE_ABLY_API_KEY` in Vercel if those features are enabled. Do not put database, JWT, SMTP, Cloudinary API credentials, or Gemini secrets in `VITE_` variables; Vite embeds those values in the browser bundle.
+5. Add the Vercel production domain to the Google OAuth authorized JavaScript origins. Keep `FRONTEND_URL` and `CORS_ORIGINS` in Railway aligned with the actual Vercel origin.
+
+The API handles uploads directly from the browser; requests do not pass through Vercel's serverless functions. The API continues to enforce its existing 50 MB per-file limit and validates supported file types. Test registration email, Google sign-in, uploads, and database access on the deployed domains before launch.
+
+Never commit real credentials. If a credential was ever committed or shared, rotate it before deployment.

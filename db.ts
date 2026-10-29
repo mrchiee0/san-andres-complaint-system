@@ -899,6 +899,31 @@ async function ensureSchema() {
         INDEX idx_boundary_audit_user (user_id, created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS predictive_recommendations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        recommendation_type ENUM('seasonal', 'report_based', 'zone_based', 'risk_based') NOT NULL,
+        category VARCHAR(150) NULL,
+        zone VARCHAR(150) NULL,
+        risk_level ENUM('low', 'moderate', 'high', 'critical', 'insufficient_data') NOT NULL DEFAULT 'moderate',
+        priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
+        recommended_action TEXT NOT NULL,
+        rationale TEXT NOT NULL,
+        supporting_stats JSON NULL,
+        timeframe VARCHAR(100) NOT NULL DEFAULT 'Next 7 Days',
+        responsible_office VARCHAR(150) NOT NULL DEFAULT 'Barangay San Andres Council',
+        status ENUM('suggested', 'under_review', 'approved', 'in_progress', 'completed', 'dismissed') NOT NULL DEFAULT 'suggested',
+        notes TEXT NULL,
+        actioned_by INT NULL,
+        actioned_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_pred_rec_status (status),
+        INDEX idx_pred_rec_type (recommendation_type),
+        INDEX idx_pred_rec_zone (zone)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
   } catch (error) {
     console.error('Schema verification failed:', error);
     throw error;
@@ -908,12 +933,37 @@ async function ensureSchema() {
 }
 
 export async function initDb() {
+  const configuredDbHost = process.env.DB_HOST || process.env.MYSQLHOST;
+  const configuredDbUser = process.env.DB_USER || process.env.MYSQLUSER;
+  const configuredDbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD;
+  const configuredDbName = process.env.DB_NAME || process.env.MYSQLDATABASE;
+  const dbHost = process.env.DB_HOST || process.env.MYSQLHOST || 'localhost';
+  const dbUser = process.env.DB_USER || process.env.MYSQLUSER || 'root';
+  const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '';
+  const dbName = process.env.DB_NAME || process.env.MYSQLDATABASE || 'san_andres_complaint_system';
+  const dbPort = Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306);
+
+  if (process.env.NODE_ENV === 'production') {
+    const missingSettings = [
+      ['DB_HOST or MYSQLHOST', !configuredDbHost],
+      ['DB_USER or MYSQLUSER', !configuredDbUser],
+      ['DB_PASSWORD or MYSQLPASSWORD', !configuredDbPassword],
+      ['DB_NAME or MYSQLDATABASE', !configuredDbName],
+    ]
+      .filter(([, missing]) => missing)
+      .map(([name]) => name);
+
+    if (missingSettings.length > 0) {
+      throw new Error(`Missing production database configuration: ${missingSettings.join(', ')}.`);
+    }
+  }
+
   pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'san_andres_complaint_system',
+    host: dbHost,
+    port: dbPort,
+    user: dbUser,
+    password: dbPassword,
+    database: dbName,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,

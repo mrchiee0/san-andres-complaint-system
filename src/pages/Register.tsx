@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -218,7 +219,7 @@ export default function Register() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('/api/auth/register/verify-email', {
+        const response = await fetch(apiUrl('/api/auth/register/verify-email'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
@@ -299,7 +300,7 @@ export default function Register() {
     if (!validateAccountAndPersonal()) return;
     setSendingVerification(true);
     try {
-      const response = await fetch('/api/auth/register/start', {
+      const response = await fetch(apiUrl('/api/auth/register/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -333,7 +334,7 @@ export default function Register() {
 
     setVerifyingEmail(true);
     try {
-      const response = await fetch('/api/auth/register/verify-email', {
+      const response = await fetch(apiUrl('/api/auth/register/verify-email'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: verificationCode.trim() }),
@@ -391,7 +392,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/register/complete', {
+      const response = await fetch(apiUrl('/api/auth/register/complete'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, terms_agreed: agreedToTerms }),

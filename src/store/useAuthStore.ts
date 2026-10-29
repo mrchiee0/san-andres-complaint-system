@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types';
@@ -28,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
         }
         try {
           set({ loading: true });
-          const response = await fetch('/api/auth/verify', {
+          const response = await fetch(apiUrl('/api/auth/verify'), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (response.ok) {

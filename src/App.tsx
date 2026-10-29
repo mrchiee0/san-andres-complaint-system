@@ -24,6 +24,8 @@ const NoticeToAppear = lazy(() => import('./pages/NoticeToAppear'));
 const CertificateToFileAction = lazy(() => import('./pages/CertificateToFileAction'));
 const SanAndresMapPage = lazy(() => import('./pages/SanAndresMapPage'));
 const BoundaryManagement = lazy(() => import('./pages/BoundaryManagement'));
+const TrendAnalysis = lazy(() => import('./pages/TrendAnalysis'));
+const AIPrediction = lazy(() => import('./pages/AIPrediction'));
 
 import { useSettingsStore } from './store/useSettingsStore';
 
@@ -98,6 +100,10 @@ export default function App() {
             <Route path="/admin/boundaries" element={<AdminRoute><BoundaryManagement /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
             <Route path="/settings" element={<ResidentRoute><UserSettings /></ResidentRoute>} />
+            <Route path="/reports/trends" element={<AdminRoute><TrendAnalysis /></AdminRoute>} />
+            <Route path="/reports/predictions" element={<AdminRoute><AIPrediction /></AdminRoute>} />
+            <Route path="/ulat/trends" element={<AdminRoute><TrendAnalysis /></AdminRoute>} />
+            <Route path="/ulat/predictions" element={<AdminRoute><AIPrediction /></AdminRoute>} />
             
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -9,6 +10,7 @@ import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { safeJson } from '../lib/utils';
+import { cloudinaryImageUrl } from '../lib/cloudinaryAssets';
 import { useSettingsStore } from '../store/useSettingsStore';
 import BrandLogo from '../components/BrandLogo';
 
@@ -36,7 +38,7 @@ export default function Login() {
   const handleGoogleLogin = React.useCallback(async (credential: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/google', {
+      const res = await fetch(apiUrl('/api/auth/google'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credential }),
@@ -105,7 +107,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/google/verify-otp', {
+      const res = await fetch(apiUrl('/api/auth/google/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challenge: googleChallenge, otp: googleOtp }),
@@ -134,7 +136,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: email, password }),
@@ -162,7 +164,7 @@ export default function Login() {
     }
     setResetLoading(true);
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch(apiUrl('/api/auth/forgot-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail }),
@@ -193,7 +195,7 @@ export default function Login() {
     }
     setResetLoading(true);
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch(apiUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail, otp: resetOtp, password: resetPassword }),
@@ -222,7 +224,7 @@ export default function Login() {
       {/* Decorative Background Elements */}
     <div className="absolute inset-0 z-0">
       <img
-        src="/images/login-bg.jpg"
+        src={cloudinaryImageUrl('login-bg.jpg')}
         alt=""
         className="h-full w-full object-cover opacity-85"
       />

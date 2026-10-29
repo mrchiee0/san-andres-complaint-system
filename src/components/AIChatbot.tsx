@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, Minimize2, LogIn, UserPlus, ClipboardList, MessageCircle, ChevronRight } from 'lucide-react';
@@ -155,7 +156,7 @@ export default function AIChatbot() {
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/complaints?scope=mine', {
+      const res = await fetch(apiUrl('/api/complaints?scope=mine'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -243,7 +244,7 @@ export default function AIChatbot() {
     // Check for existing active complaint to link the conversation to
     setIsLoading(true);
     try {
-      const res = await fetch('/api/complaints?scope=mine', {
+      const res = await fetch(apiUrl('/api/complaints?scope=mine'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -320,7 +321,7 @@ export default function AIChatbot() {
 
     let kbResult: any = null;
     try {
-      const kbRes = await fetch('/api/chat/search', {
+      const kbRes = await fetch(apiUrl('/api/chat/search'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userText })
@@ -345,7 +346,7 @@ export default function AIChatbot() {
           /^(ano|paano|why|how|saan|bakit|kailan|what)\b/i.test(userText);
 
         if (looksLikeQuestion && cleanResponse.length > 30 && !hasError) {
-          fetch('/api/chat/learn', {
+          fetch(apiUrl('/api/chat/learn'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question: userText, answer: cleanResponse })

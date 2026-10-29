@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { Calendar as CalendarIcon, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -30,7 +31,7 @@ export default function CalendarPage() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch('/api/mediation', {
+      const res = await fetch(apiUrl('/api/mediation'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await safeJson(res);

@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -36,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/sheet';
 import { cn } from '../lib/utils';
+import { cloudinaryImageUrl } from '../lib/cloudinaryAssets';
 import AIChatbot from '../components/AIChatbot';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useAuth } from '../hooks/useAuth';
@@ -47,15 +49,15 @@ import BrandLogo from '../components/BrandLogo';
 import CommunityBoundaryMap from '../components/CommunityBoundaryMap';
 
 const ctaCarouselImages = [
-  '/images/cta-cleanup.jpg',
-  '/images/cta-address.jpg',
-  '/images/cta-community.jpg',
+  cloudinaryImageUrl('cta-cleanup.jpg'),
+  cloudinaryImageUrl('cta-address.jpg'),
+  cloudinaryImageUrl('cta-community.jpg'),
 ];
 const aboutCarouselImages = [
-  { src: '/images/san-andres-community.jpg', alt: 'Community life in Barangay San Andres' },
-  { src: '/images/about-san-andres-seal.jpg', alt: 'Barangay San Andres official seal at the barangay hall' },
-  { src: '/images/about-san-andres-community-1.jpg', alt: 'Residents at a community activity in San Andres' },
-  { src: '/images/about-san-andres-community-2.jpg', alt: 'Barangay personnel speaking with a resident' },
+  { src: cloudinaryImageUrl('san-andres-community.jpg'), alt: 'Community life in Barangay San Andres' },
+  { src: cloudinaryImageUrl('about-san-andres-seal.jpg'), alt: 'Barangay San Andres official seal at the barangay hall' },
+  { src: cloudinaryImageUrl('about-san-andres-community-1.jpg'), alt: 'Residents at a community activity in San Andres' },
+  { src: cloudinaryImageUrl('about-san-andres-community-2.jpg'), alt: 'Barangay personnel speaking with a resident' },
 ];
 
 function AnimatedWords({ text, className }: { text: string; className?: string }) {
@@ -155,7 +157,7 @@ export default function LandingPage() {
   }, [prefersReducedMotion]);
 
   React.useEffect(() => {
-    fetch('/api/complaint-types')
+    fetch(apiUrl('/api/complaint-types'))
       .then(res => res.json())
       .then(data => setComplaintTypes(Array.isArray(data) ? data : []))
       .catch(err => console.error('Failed to fetch complaint types', err));
@@ -396,7 +398,7 @@ export default function LandingPage() {
         {/* Hero background */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center bg-scroll md:bg-fixed"
-          style={{ backgroundImage: "url('/images/san-andres-hall.jpg')" }}
+          style={{ backgroundImage: `url('${cloudinaryImageUrl('san-andres-hall.jpg')}')` }}
           aria-hidden="true"
         >
           <div className="absolute inset-0 bg-black/60" />

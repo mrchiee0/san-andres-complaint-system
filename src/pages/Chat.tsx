@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -19,7 +20,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
-        const res = await fetch('/api/complaints', {
+        const res = await fetch(apiUrl('/api/complaints'), {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {

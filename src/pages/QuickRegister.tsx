@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
@@ -28,7 +29,7 @@ export default function QuickRegister() {
     }
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/resident/register/start', {
+      const response = await fetch(apiUrl('/api/auth/resident/register/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, terms_agreed: true }),
@@ -53,7 +54,7 @@ export default function QuickRegister() {
     }
     setLoading(true);
     try {
-      const verifyResponse = await fetch('/api/auth/register/verify-email', {
+      const verifyResponse = await fetch(apiUrl('/api/auth/register/verify-email'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, email }),
@@ -80,7 +81,7 @@ export default function QuickRegister() {
     }
     setLoading(true);
     try {
-      const completeResponse = await fetch('/api/auth/register/complete', {
+      const completeResponse = await fetch(apiUrl('/api/auth/register/complete'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: verificationToken, terms_agreed: true, is_resident: residency }),

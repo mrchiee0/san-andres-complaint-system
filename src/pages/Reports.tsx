@@ -1,5 +1,7 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileText, Download, TrendingUp, Users, AlertTriangle, ArrowUpRight, MapPinned, BarChart3, Percent, Target, CheckCircle2, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { FileText, Download, TrendingUp, Users, AlertTriangle, ArrowUpRight, MapPinned, BarChart3, Percent, Target, CheckCircle2, MapPin, Brain, Sparkles, ChevronRight } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -39,7 +41,7 @@ export default function Reports() {
 
   useEffect(() => {
     setStats(null);
-    fetch(`/api/stats?scope=${reportScope}`, { headers: { Authorization: `Bearer ${token}` }})
+    fetch(apiUrl(`/api/stats?scope=${reportScope}`), { headers: { Authorization: `Bearer ${token}` }})
       .then(safeJson)
       .then((data) => setStats(data || null))
       .catch(() => setStats(null));
@@ -99,6 +101,24 @@ export default function Reports() {
       >
         <h1 className="text-3xl font-serif italic font-bold">Reports and Analytics</h1>
         <div className="report-controls flex items-center gap-3">
+          <div className="hidden print:hidden flex items-center gap-2 mr-1">
+            <Link
+              to="/reports/trends"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/60 bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all shadow-xs"
+            >
+              <TrendingUp size={13} className="text-primary" />
+              Trend Analysis
+              <ChevronRight size={12} className="text-muted-foreground" />
+            </Link>
+            <Link
+              to="/reports/predictions"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-primary/40 bg-primary/5 text-xs font-semibold text-primary hover:bg-primary/10 transition-all shadow-xs"
+            >
+              <Sparkles size={13} />
+              AI Prediction
+              <ChevronRight size={12} className="text-primary/60" />
+            </Link>
+          </div>
           <div className="flex rounded-xl border border-border/50 bg-muted/30 p-1" role="group" aria-label="Report scope">
             {[
               { value: 'all', label: 'Combined' },

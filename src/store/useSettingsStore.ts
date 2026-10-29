@@ -1,5 +1,7 @@
+import { apiUrl } from '../lib/api';
 import { create } from 'zustand';
 import { safeJson } from '../lib/utils';
+import { cloudinaryImageUrl } from '../lib/cloudinaryAssets';
 import { OFFICIAL_BARANGAY_ADDRESS, OFFICIAL_PIO_EMAIL } from '../constants';
 
 interface SiteSettings {
@@ -26,7 +28,7 @@ interface SettingsState {
   fetchSettings: () => Promise<void>;
 }
 
-const DEFAULT_LOGO_PATH = '/images/brgy-san-andres-logo.avif';
+const DEFAULT_LOGO_PATH = cloudinaryImageUrl('brgy-san-andres-logo.avif');
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   settings: {
@@ -49,7 +51,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   isLoading: true,
   fetchSettings: async () => {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch(apiUrl('/api/settings'));
       if (res.ok) {
         const data = await safeJson(res);
         set((state) => ({

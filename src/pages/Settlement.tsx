@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Printer, ChevronLeft, Download, ShieldCheck, User, Users, Calendar, MapPin } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function Settlement() {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`/api/mediation/${id}`, {
+        const response = await fetch(apiUrl(`/api/mediation/${id}`), {
           headers: {
             'Authorization': `Bearer ${token}`
           }

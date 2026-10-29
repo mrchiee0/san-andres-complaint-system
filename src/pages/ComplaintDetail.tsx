@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -76,7 +77,7 @@ export default function ComplaintDetail() {
   }, [id, token]);
 
   const fetchComplaint = () => {
-    fetch(`/api/complaints/${id}`, {
+    fetch(apiUrl(`/api/complaints/${id}`), {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(safeJson)
@@ -87,7 +88,7 @@ export default function ComplaintDetail() {
       setSelectedLupon((result.lupon || []).map((l: any) => l.id));
 
       if (user?.role !== 'mamamayan') {
-        void fetch(`/api/complaints/${id}/read`, {
+        void fetch(apiUrl(`/api/complaints/${id}/read`), {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` },
         }).catch((error) => console.error('Unable to mark complaint as read:', error));
@@ -97,7 +98,7 @@ export default function ComplaintDetail() {
   };
 
   const fetchLupon = () => {
-    fetch('/api/lupon-members', {
+    fetch(apiUrl('/api/lupon-members'), {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())
@@ -107,7 +108,7 @@ export default function ComplaintDetail() {
 
   const addWitness = (e: React.FormEvent) => {
     e.preventDefault();
-    fetch(`/api/complaints/${id}/witnesses`, {
+    fetch(apiUrl(`/api/complaints/${id}/witnesses`), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -125,7 +126,7 @@ export default function ComplaintDetail() {
   };
 
   const assignLupon = () => {
-    fetch(`/api/complaints/${id}/lupon`, {
+    fetch(apiUrl(`/api/complaints/${id}/lupon`), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -162,7 +163,7 @@ export default function ComplaintDetail() {
         body.append('resolution_details', resolutionDetails.trim());
         if (dispositionFile) body.append('disposition_document', dispositionFile);
       }
-      const response = await fetch(`/api/complaints/${id}/status`, {
+      const response = await fetch(apiUrl(`/api/complaints/${id}/status`), {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
         body,
@@ -183,7 +184,7 @@ export default function ComplaintDetail() {
     if (eligibilityDecision === null || isSavingEligibility) return;
     setIsSavingEligibility(true);
     try {
-      const response = await fetch(`/api/complaints/${id}/mediation-eligibility`, {
+      const response = await fetch(apiUrl(`/api/complaints/${id}/mediation-eligibility`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -246,7 +247,7 @@ export default function ComplaintDetail() {
             className="gap-2 text-xs font-semibold"
             onClick={async () => {
               try {
-                const response = await fetch(`/api/complaints/${complaint.id}/report/docx`, {
+                const response = await fetch(apiUrl(`/api/complaints/${complaint.id}/report/docx`), {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 if (!response.ok) {

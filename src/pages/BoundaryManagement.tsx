@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import L from 'leaflet';
 import { GeoJSON, MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -192,8 +193,8 @@ export default function BoundaryManagement() {
     setLoading(true);
     try {
       const [boundaryResponse, typeResponse] = await Promise.all([
-        fetch('/api/admin/boundaries', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/boundaries/types'),
+        fetch(apiUrl('/api/admin/boundaries'), { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(apiUrl('/api/boundaries/types')),
       ]);
       const [boundaryData, typeData] = await Promise.all([safeJson(boundaryResponse), safeJson(typeResponse)]);
       if (typeResponse.ok) setTypes(Array.isArray(typeData) ? typeData : []);
@@ -298,7 +299,7 @@ export default function BoundaryManagement() {
     }
     setSaving(true);
     try {
-      const { response, data } = await saveWithOverlapConfirmation(editingId ? `/api/boundaries/${editingId}` : '/api/boundaries', {
+      const { response, data } = await saveWithOverlapConfirmation(editingId ? apiUrl(`/api/boundaries/${editingId}`) : apiUrl('/api/boundaries'), {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       }, { ...form, type_id: Number(form.type_id), parent_id: form.parent_id || null, geometry: geometryDraft });
@@ -329,7 +330,7 @@ export default function BoundaryManagement() {
     setSaving(true);
     try {
       const geometry = toGeometry(group);
-      const { response, data } = await saveWithOverlapConfirmation(`/api/boundaries/${selectedId}/geometry`, {
+      const { response, data } = await saveWithOverlapConfirmation(apiUrl(`/api/boundaries/${selectedId}/geometry`), {
         method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       }, { geometry });
       if (!response.ok) throw new Error(data.error || 'Unable to save the edited shape.');
@@ -352,7 +353,7 @@ export default function BoundaryManagement() {
     if (!token) return;
     if (!window.confirm(`${status === 'active' ? 'Activate' : 'Deactivate'} ${boundary.name}?`)) return;
     try {
-      const response = await fetch(`/api/boundaries/${boundary.id}/status`, {
+      const response = await fetch(apiUrl(`/api/boundaries/${boundary.id}/status`), {
         method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
@@ -369,7 +370,7 @@ export default function BoundaryManagement() {
   const archiveBoundary = async (boundary: BoundaryRecord) => {
     if (!token || !window.confirm(`Archive "${boundary.name}"? This may affect locations assigned to it. Child boundaries must be deactivated first.`)) return;
     try {
-      const response = await fetch(`/api/boundaries/${boundary.id}`, {
+      const response = await fetch(apiUrl(`/api/boundaries/${boundary.id}`), {
         method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
       });
       const data = await safeJson(response);
@@ -388,7 +389,7 @@ export default function BoundaryManagement() {
     event.preventDefault();
     if (!token || !newTypeName.trim()) return;
     try {
-      const response = await fetch('/api/boundaries/types', {
+      const response = await fetch(apiUrl('/api/boundaries/types'), {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: newTypeName.trim(), color: newTypeColor }),
       });
@@ -485,7 +486,7 @@ export default function BoundaryManagement() {
 
           <details className="rounded-lg border border-border bg-card p-4">
             <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">Configure boundary types<ChevronDown size={15} /></summary>
-            <div className="mt-3 space-y-2">{types.map((type) => <div key={type.id} className="flex items-center justify-between text-xs"><span>{type.name}</span><input aria-label={`${type.name} default color`} type="color" value={type.color} onChange={async (event) => { if (!token) return; const response = await fetch(`/api/boundaries/types/${type.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ color: event.target.value }) }); if (response.ok) await load(); else toast.error('Unable to update the type color.'); }} className="h-7 w-9 cursor-pointer rounded border border-input p-0.5" /></div>)}
+            <div className="mt-3 space-y-2">{types.map((type) => <div key={type.id} className="flex items-center justify-between text-xs"><span>{type.name}</span><input aria-label={`${type.name} default color`} type="color" value={type.color} onChange={async (event) => { if (!token) return; const response = await fetch(apiUrl(`/api/boundaries/types/${type.id}`), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ color: event.target.value }) }); if (response.ok) await load(); else toast.error('Unable to update the type color.'); }} className="h-7 w-9 cursor-pointer rounded border border-input p-0.5" /></div>)}
               <form onSubmit={saveType} className="flex gap-2 border-t border-border pt-3"><Input aria-label="New boundary type" value={newTypeName} onChange={(event) => setNewTypeName(event.target.value)} maxLength={64} placeholder="Add type" /><input aria-label="New type color" type="color" value={newTypeColor} onChange={(event) => setNewTypeColor(event.target.value)} className="h-10 w-10 shrink-0 cursor-pointer rounded border border-input p-1" /><Button type="submit" size="icon" aria-label="Add boundary type"><Plus size={16} /></Button></form>
             </div>
           </details>

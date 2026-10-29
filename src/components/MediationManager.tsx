@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { Calendar, MapPin, FileText, CheckCircle2, Clock, AlertCircle, Printer, Upload, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
@@ -53,7 +54,7 @@ export default function MediationManager({ mediation = [], complaintId, isStaff,
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/complaints/${complaintId}/mediation`, {
+      const response = await fetch(apiUrl(`/api/complaints/${complaintId}/mediation`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +101,7 @@ export default function MediationManager({ mediation = [], complaintId, isStaff,
         formData.append('document', updateData.file);
       }
 
-      const response = await fetch(`/api/mediation/${mediationId}/outcome`, {
+      const response = await fetch(apiUrl(`/api/mediation/${mediationId}/outcome`), {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`

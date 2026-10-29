@@ -1,8 +1,10 @@
 import React from 'react';
 import { cn } from '../lib/utils';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { cloudinaryImageUrl } from '../lib/cloudinaryAssets';
 
-const DEFAULT_BRAND_LOGO = '/images/brgy-san-andres-logo.avif';
+const DEFAULT_BRAND_LOGO = cloudinaryImageUrl('brgy-san-andres-logo.avif');
+const FALLBACK_BRAND_LOGO = '/images/brgy-san-andres-logo.avif';
 
 type BrandLogoProps = {
   src?: string | null;
@@ -30,7 +32,7 @@ export default function BrandLogo({
           onError={(event) => {
             const img = event.currentTarget;
             img.onerror = null;
-            img.src = DEFAULT_BRAND_LOGO;
+            img.src = FALLBACK_BRAND_LOGO;
           }}
         />
       ) : (

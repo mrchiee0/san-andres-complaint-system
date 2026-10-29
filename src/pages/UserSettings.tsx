@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../store/useAuthStore';
@@ -17,7 +18,7 @@ export default function UserSettings() {
 
   React.useEffect(() => {
     if (!token) return;
-    fetch('/api/auth/profile/details', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(apiUrl('/api/auth/profile/details'), { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
         const profile = await safeJson(response);
         if (!response.ok) throw new Error(profile.error || 'Unable to load your profile details.');
@@ -37,7 +38,7 @@ export default function UserSettings() {
     event.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ pangalan: name, phone_number: phone, address }),

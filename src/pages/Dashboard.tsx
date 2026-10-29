@@ -1,3 +1,4 @@
+import { apiUrl } from '../lib/api';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -86,7 +87,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.role === 'mamamayan') return;
-    fetch('/api/stats', {
+    fetch(apiUrl('/api/stats'), {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(safeJson)
@@ -98,7 +99,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.role !== 'mamamayan') return;
-    fetch('/api/complaint-types')
+    fetch(apiUrl('/api/complaint-types'))
       .then(safeJson)
       .then((data) => { if (Array.isArray(data) && data.length) setComplaintTypes(data); });
   }, [user?.role]);
